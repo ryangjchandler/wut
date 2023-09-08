@@ -1,4 +1,5 @@
 use std::process::exit;
+use wasmer::{self, imports};
 
 mod parser;
 mod ast;
@@ -21,5 +22,16 @@ fn main() {
     }
 
     let wat = codegen::generate(&ast);
-    println!("{wat}");
+
+    if args.contains(&"--run".to_string()) {
+        let mut store = wasmer::Store::default();
+        let module = wasmer::Module::new(&store, &wat).unwrap();
+        let imports = imports! {};
+        let instance = wasmer::Instance::new(&mut store, &module, &imports).unwrap();
+        let fib = instance.exports.get_function("fib").unwrap();
+        let result = fib.call(&mut store, &[wasmer::Value::I64(30)]).unwrap();
+        println!("{result:?}");
+    } else {
+        println!("{wat}");
+    }
 }
