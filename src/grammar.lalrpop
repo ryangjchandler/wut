@@ -1,0 +1,64 @@
+use crate::ast::*;
+
+grammar;
+
+pub Program: Vec<Statement> = {
+    <stmts:Stmt*> => stmts,
+}
+
+Stmt: Statement = {
+    <exported:"export"?> "fn" <name:Ident> "(" <args:Comma<Ident>> ")" "{" <body:Block> "}" => Statement::Function { name, args, body, exported: exported.is_some() },
+    "if" <condition:Expr> "{" <then:Block> "}" <otherwise:("else" "{" <Block> "}")?> => Statement::If { condition, then, otherwise },
+    "return" <value:Expr?> => Statement::Return { value }
+}
+
+Expr: Expression = {
+    <expr:LessThan> => expr,
+}
+
+Boxed<T>: Box<T> = {
+    <b:T> => Box::new(b),
+}
+
+Comma<T>: Vec<T> = { // (1)
+    <mut v:(<T> ",")*> <e:T?> => match e { // (2)
+        None => v,
+        Some(e) => {
+            v.push(e);
+            v
+        }
+    }
+};
+
+LessThan: Expression = {
+    <lhs:Boxed<LessThan>> "<" <rhs:Boxed<Addition>> => Expression::LessThan { lhs, rhs },
+    Addition,
+}
+
+Addition: Expression = {
+    <lhs:Boxed<Addition>> "+" <rhs:Boxed<Multiplication>> => Expression::Add { lhs, rhs },
+    <lhs:Boxed<Addition>> "-" <rhs:Boxed<Multiplication>> => Expression::Subtract { lhs, rhs },
+    Multiplication,
+}
+
+Multiplication: Expression = {
+    Call,
+}
+
+Call: Expression = {
+    <target:Ident> "(" <args:Comma<Expr>> ")" => Expression::Call { target, args },
+    Term,
+}
+
+Term: Expression = {
+    Ident => Expression::Identifier { name: <> },
+    r"[0-9]+" => Expression::Integer { value: <>.to_string() }
+}
+
+Block: Vec<Statement> = {
+    <stmts:Stmt*> => stmts,
+}
+
+Ident: String = {
+    <s:r"[a-zA-Z]+"> => s.to_string(),
+}
