@@ -7,7 +7,7 @@ By compiling a language to WebAssembly, you open up a whole new world of possibi
 ## Roadmap
 
 * [x] Get basic `.wat` generation working.
-* [-] Embed a WASM runtime and execute directly.
+* [ ] Embed a WASM runtime and execute directly.
 * [ ] Add host bindings for a generic `print()` function.
 * [ ] Add static types.
 * [ ] Add support for strings.
